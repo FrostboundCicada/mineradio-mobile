@@ -9,7 +9,6 @@
  */
 
 const http = require('http');
-const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
@@ -50,15 +49,8 @@ childServer.on('exit', (code) => {
 });
 
 // ============================================================
-// 移动端登录 API（NeteaseCloudMusicApi）
+// 辅助函数
 // ============================================================
-let NeteaseAPI = null;
-try {
-  NeteaseAPI = require('NeteaseCloudMusicApi');
-} catch (e) {
-  console.log('[Cloud] NeteaseCloudMusicApi not available, phone login disabled');
-}
-
 function jsonReply(res, status, data) {
   res.writeHead(status, {
     'Content-Type': 'application/json; charset=utf-8',
@@ -67,29 +59,6 @@ function jsonReply(res, status, data) {
     'Access-Control-Allow-Headers': 'Content-Type',
   });
   res.end(JSON.stringify(data));
-}
-
-function readBody(req) {
-  return new Promise((resolve) => {
-    let body = '';
-    req.on('data', (chunk) => { body += chunk; });
-    req.on('end', () => {
-      try { resolve(JSON.parse(body)); }
-      catch (e) { resolve({ raw: body }); }
-    });
-  });
-}
-
-function saveCookie(provider, cookieStr) {
-  const file = provider === 'qq' ? QQ_COOKIE_FILE : COOKIE_FILE;
-  try {
-    fs.writeFileSync(file, cookieStr, 'utf8');
-    console.log('[Cloud] Cookie saved for', provider);
-    return true;
-  } catch (e) {
-    console.error('[Cloud] Failed to save cookie:', e.message);
-    return false;
-  }
 }
 
 // ============================================================
@@ -122,92 +91,6 @@ const server = http.createServer(async (req, res) => {
       'Access-Control-Allow-Headers': 'Content-Type',
     });
     res.end();
-    return;
-  }
-
-  // ---- 移动端登录 API ----
-
-  if (url.pathname === '/api/login/cellphone' && req.method === 'POST') {
-    if (!NeteaseAPI) {
-      jsonReply(res, 500, { code: 500, message: 'NeteaseCloudMusicApi not loaded' });
-      return;
-    }
-    try {
-      const body = await readBody(req);
-      const { phone, password, captcha, countrycode } = body || {};
-      if (!phone || (!password && !captcha)) {
-        jsonReply(res, 400, { code: 400, message: '请提供手机号和密码或验证码' });
-        return;
-      }
-      console.log('[Cloud] Phone login:', phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2'));
-      const CryptoJS = require('crypto-js');
-      const loginQuery = {
-        phone, countrycode: countrycode || '86',
-        timestamp: Date.now(),
-      };
-      if (captcha) { loginQuery.captcha = captcha; }
-      else if (password) { loginQuery.md5_password = CryptoJS.MD5(password).toString(); }
-      const result = await NeteaseAPI.login_cellphone(loginQuery);
-      if (result.body && result.body.cookie) {
-        saveCookie('netease', result.body.cookie);
-        jsonReply(res, 200, { code: 200, message: '登录成功', account: result.body.account || {}, profile: result.body.profile || {} });
-      } else {
-        jsonReply(res, 400, {
-          code: (result.body && result.body.code) || -1,
-          message: (result.body && result.body.message) || '登录失败',
-        });
-      }
-    } catch (e) {
-      console.error('[Cloud] Phone login error:', e);
-      jsonReply(res, 500, { code: 500, message: '服务器错误: ' + (e.body && e.body.message || e.message || String(e)) });
-    }
-    return;
-  }
-
-  if (url.pathname === '/api/login/cellphone/captcha' && req.method === 'POST') {
-    if (!NeteaseAPI) {
-      jsonReply(res, 500, { code: 500, message: 'NeteaseCloudMusicApi not loaded' });
-      return;
-    }
-    try {
-      const body = await readBody(req);
-      const { phone, countrycode } = body || {};
-      if (!phone) { jsonReply(res, 400, { code: 400, message: '请提供手机号' }); return; }
-      const sent = await NeteaseAPI.captcha_sent({
-        cellphone: phone, ctcode: countrycode || '86', timestamp: Date.now(),
-      });
-      jsonReply(res, 200, {
-        code: (sent.body && sent.body.code) || 200,
-        message: (sent.body && sent.body.code === 200) ? '验证码已发送' : (sent.body && sent.body.message || '发送失败'),
-      });
-    } catch (e) {
-      console.error('[Cloud] SMS error:', e);
-      jsonReply(res, 500, { code: 500, message: '发送失败: ' + (e.body && e.body.message || e.message || String(e)) });
-    }
-    return;
-  }
-
-  if (url.pathname === '/api/login/mobile-status' && req.method === 'GET') {
-    let nc = '', qc = '';
-    try { nc = fs.readFileSync(COOKIE_FILE, 'utf8').trim(); } catch (e) {}
-    try { qc = fs.readFileSync(QQ_COOKIE_FILE, 'utf8').trim(); } catch (e) {}
-    jsonReply(res, 200, {
-      netease: { hasCookie: !!nc, cookieLen: nc.length },
-      qq: { hasCookie: !!qc, cookieLen: qc.length },
-    });
-    return;
-  }
-
-  if (url.pathname === '/api/login/cookie' && req.method === 'POST') {
-    try {
-      const body = await readBody(req);
-      const { provider, cookie } = body || {};
-      if (!cookie) { jsonReply(res, 400, { code: 400, message: '请提供cookie' }); return; }
-      const ok = saveCookie(provider || 'netease', cookie);
-      jsonReply(res, 200, { code: 200, message: ok ? 'Cookie已保存' : '保存失败' });
-    } catch (e) {
-      jsonReply(res, 500, { code: 500, message: e.message });
-    }
     return;
   }
 
