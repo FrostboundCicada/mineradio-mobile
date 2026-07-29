@@ -10,17 +10,23 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'  # 使用 Node 22 避免弃用警告
+
       - run: npm ci
       - run: npm run build
       - run: npm install @capacitor/ios
-      - run: npx cap add ios
+      - name: Add iOS platform (clean)
+        run: |
+          rm -rf ios
+          npx cap add ios
       - run: npx cap sync ios
       - run: sudo xcode-select -switch /Applications/Xcode.app
 
-      - name: Build iOS (unsigned)
+      - name: Build iOS (simulator)
         run: |
           cd ios/App
           xcodebuild -workspace App.xcworkspace \
@@ -36,25 +42,36 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ios-app
-          path: ios/App/build/Build/Products/*.app
+          # 修正路径：模拟器构建的 .app 位于 Debug-iphonesimulator 下
+          path: ios/App/build/Build/Products/Debug-iphonesimulator/App.app
 
   build-android:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
+
       - run: npm ci
       - run: npm run build
       - run: npm install @capacitor/android
-      - run: npx cap add android
+      - name: Add Android platform (clean)
+        run: |
+          rm -rf android
+          npx cap add android
       - run: npx cap sync android
-      - uses: actions/setup-java@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
-      - run: |
+
+      - name: Build Android APK
+        run: |
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
