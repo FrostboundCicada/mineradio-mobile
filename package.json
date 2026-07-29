@@ -4,7 +4,7 @@
   "description": "Mineradio 移动版 — 沉浸式音乐播放器",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node -e \"var f=require('fs'),p=require('path');['vendor','assets'].forEach(function(d){var s=p.join('public',d),t=p.join('www',d);if(f.existsSync(s)){f.mkdirSync(t,{recursive:true});f.readdirSync(s).forEach(function(x){f.copyFileSync(p.join(s,x),p.join(t,x))})}})\"",
+    "build": "vite build && node -e \"var f=require('fs'),p=require('path');['vendor','assets'].forEach(function(d){var s=p.join('public',d),t=p.join('www',d);if(f.existsSync(s)){f.mkdirSync(t,{recursive:true});f.readdirSync(s).forEach(function(x){f.copyFileSync(p.join(s,x),p.join(t,x))})}});['default-user-fx-archive.json','sonic-topography-preset.js','sonic-workshop-preset.js'].forEach(function(x){var s=p.join('public',x),t=p.join('www',x);if(f.existsSync(s))f.copyFileSync(s,t)})\"",
     "sync": "npx cap sync",
     "open:android": "npx cap open android",
     "open:ios": "npx cap open ios",

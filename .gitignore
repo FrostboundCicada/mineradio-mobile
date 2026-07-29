@@ -2,5 +2,8 @@ node_modules/
 dist/
 .cookie
 .qq-cookie
+.kugou-cookie
+.qishui-cookie
+data/
 *.log
 .DS_Store
