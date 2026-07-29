@@ -1,86 +1,91 @@
-name: Build Mobile Apps
+name: Build iOS & Android
 
 on:
-  push:
-    branches: [ main ]
   workflow_dispatch:
 
 jobs:
+  # ============= iOS 构建 =============
   build-ios:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
-
+          node-version: '20'
       - run: npm ci
       - run: npm run build
       - run: npm install @capacitor/ios
-
       - name: Add iOS platform (clean)
         run: |
           rm -rf ios
           npx cap add ios
-
       - run: npx cap sync ios
-      - run: sudo xcode-select -switch /Applications/Xcode.app
-
-      - name: Build iOS (simulator)
+      - name: Import certificate
+        env:
+          CERT_BASE64: ${{ secrets.IOS_CERT_P12_BASE64 }}
+          PROVISION_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+          CERT_PASSWORD: ${{ secrets.IOS_CERT_PASSWORD }}
+        run: |
+          security create-keychain -p "" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "" build.keychain
+          echo "$CERT_BASE64" | base64 --decode > certificate.p12
+          security import certificate.p12 -k build.keychain -P "$CERT_PASSWORD" -T /usr/bin/codesign
+          echo "$PROVISION_BASE64" | base64 --decode > profile.mobileprovision
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
+      - name: Build and sign
         run: |
           cd ios/App
           xcodebuild -workspace App.xcworkspace \
             -scheme App \
-            -configuration Debug \
-            -sdk iphonesimulator \
+            -configuration Release \
+            -sdk iphoneos \
             -derivedDataPath build \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO
-
-      - name: Upload iOS artifact
+            -allowProvisioningUpdates \
+            CODE_SIGN_IDENTITY="Apple Development" \
+            PROVISIONING_PROFILE_SPECIFIER="${{ secrets.IOS_PROVISIONING_PROFILE_SPECIFIER }}"
+      - name: Package IPA
+        run: |
+          mkdir -p Payload
+          cp -r ios/App/build/Build/Products/Release-iphoneos/App.app Payload/
+          zip -r app.ipa Payload
+      - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: ios-app
-          path: ios/App/build/Build/Products/Debug-iphonesimulator/App.app
+          name: ios-ipa
+          path: app.ipa
 
+  # ============= Android 构建 =============
   build-android:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
-
+          node-version: '20'
       - run: npm ci
       - run: npm run build
       - run: npm install @capacitor/android
-
       - name: Add Android platform (clean)
         run: |
           rm -rf android
           npx cap add android
-
       - run: npx cap sync android
-
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '21'   # 从 17 改为 21
-
-      - name: Build Android APK
+          java-version: '17'
+      - name: Build APK
         run: |
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
-
-      - name: Upload Android artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: android-app
+          name: android-apk
           path: android/app/build/outputs/apk/debug/*.apk
