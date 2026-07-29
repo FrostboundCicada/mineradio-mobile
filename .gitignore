@@ -1,5 +1,6 @@
 node_modules/
 dist/
+www/
 .cookie
 .qq-cookie
 .kugou-cookie
