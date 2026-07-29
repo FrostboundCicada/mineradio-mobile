@@ -594,26 +594,8 @@ const mobileJS = `
     return url;
   };
 
-  // -- API URL prefix --
-  window.MOBILE_API_ORIGIN = window.getMobileServerUrl();
-
-  // Patch apiJson to prefix URLs with server origin
-  var _originalFetch = window.fetch;
-  window.fetch = function(url, opts) {
-    if (typeof url === 'string' && url.startsWith('/api/') && window.MOBILE_API_ORIGIN) {
-      url = window.MOBILE_API_ORIGIN + url;
-    }
-    return _originalFetch(url, opts);
-  };
-
-  // Also patch XMLHttpRequest for any legacy code
-  var _origXHROpen = XMLHttpRequest.prototype.open;
-  XMLHttpRequest.prototype.open = function(method, url) {
-    if (typeof url === 'string' && url.startsWith('/api/') && window.MOBILE_API_ORIGIN) {
-      url = window.MOBILE_API_ORIGIN + url;
-    }
-    return _origXHROpen.apply(this, arguments);
-  };
+  // API requests use same-origin (same as original desktop app)
+  // No fetch/XHR patching needed — server and frontend are deployed together
 
   // -- Mobile body class --
   if (isMobile) {
@@ -685,7 +667,6 @@ const mobileJS = `
     setServerUrl: window.setMobileServerUrl,
     reconnect: function(url) {
       window.setMobileServerUrl(url);
-      window.MOBILE_API_ORIGIN = url;
       // Trigger a re-login check
       if (typeof checkLoginStatus === 'function') {
         loginStatusChecked = false;
@@ -1083,7 +1064,7 @@ const mobileJS = `
   }
 
   console.log('[Mineradio Mobile] Initialized. Platform:', window.MineradioMobile.platform);
-  console.log('[Mineradio Mobile] Server:', window.MOBILE_API_ORIGIN || '(not configured - same origin fallback)');
+  console.log('[Mineradio Mobile] Server: same-origin (no configuration needed)');
 })();
 `;
 

@@ -9,7 +9,9 @@
     "open:android": "npx cap open android",
     "open:ios": "npx cap open ios",
     "build:android": "vite build && npx cap sync android",
-    "build:ios": "vite build && npx cap sync ios"
+    "build:ios": "vite build && npx cap sync ios",
+    "cloud": "node server/cloud-server.js",
+    "server": "node server/server.js"
   },
   "dependencies": {
     "@capacitor/android": "^7.6.8",

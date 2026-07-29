@@ -6595,8 +6595,9 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  const staticDir = process.env.STATIC_DIR || path.join(__dirname, 'public');
   let filePath = pn === '/' ? '/index.html' : pn;
-  filePath = path.join(__dirname, 'public', filePath);
+  filePath = path.join(staticDir, filePath);
   serveStatic(res, filePath);
 });
 
