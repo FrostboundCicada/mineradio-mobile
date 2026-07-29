@@ -43,6 +43,7 @@ jobs:
             -sdk iphoneos \
             -derivedDataPath build \
             -allowProvisioningUpdates \
+            DEVELOPMENT_TEAM="A7D43ZJQR5" \
             CODE_SIGN_IDENTITY="Apple Development" \
             PROVISIONING_PROFILE_SPECIFIER="${{ secrets.IOS_PROVISIONING_PROFILE_SPECIFIER }}"
       - name: Package IPA
