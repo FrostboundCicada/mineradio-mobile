@@ -407,74 +407,7 @@ body.has-mobile-nav #player-controls-strip {
   bottom: calc(56px + var(--safe-area-bottom));
 }
 
-/* Mobile connect setup screen */
-#mobile-connect {
-  position: fixed;
-  inset: 0;
-  z-index: 10000;
-  background: #000;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 20px;
-  padding: 24px;
-  font-family: var(--font-sans);
-}
-#mobile-connect.hidden { display: none; }
-#mobile-connect h2 {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--fc-accent);
-  text-align: center;
-}
-#mobile-connect p {
-  color: var(--fc-muted);
-  font-size: 14px;
-  text-align: center;
-  line-height: 1.6;
-  max-width: 320px;
-}
-#mobile-connect input {
-  width: 100%;
-  max-width: 360px;
-  height: 48px;
-  padding: 0 16px;
-  border-radius: 12px;
-  border: 1px solid var(--fc-hair-2);
-  background: var(--fc-paper);
-  color: var(--fc-ink);
-  font-size: 16px;
-  font-family: var(--font-mono);
-  text-align: center;
-}
-#mobile-connect input:focus {
-  border-color: var(--fc-accent);
-  outline: none;
-  box-shadow: 0 0 24px rgba(0,245,212,0.15);
-}
-#mobile-connect button {
-  min-width: 160px;
-  height: 48px;
-  border-radius: 999px;
-  border: none;
-  background: var(--fc-accent);
-  color: #000;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: transform 0.18s, box-shadow 0.18s;
-  font-family: var(--font-sans);
-}
-#mobile-connect button:active {
-  transform: scale(0.96);
-}
-#mobile-connect .skip-btn {
-  background: transparent;
-  color: var(--fc-muted);
-  border: 1px solid var(--fc-hair-2);
-  font-weight: 500;
-}
+/* Mobile connect screen removed — server URL is now pre-configured or set via settings */
 
 /* ===== Mobile Login Panel ===== */
 #mobile-login-panel {
@@ -753,7 +686,6 @@ const mobileJS = `
     reconnect: function(url) {
       window.setMobileServerUrl(url);
       window.MOBILE_API_ORIGIN = url;
-      document.getElementById('mobile-connect').classList.add('hidden');
       // Trigger a re-login check
       if (typeof checkLoginStatus === 'function') {
         loginStatusChecked = false;
@@ -762,44 +694,8 @@ const mobileJS = `
     },
   };
 
-  // -- Server connection setup UI --
-  function showConnectScreen() {
-    var existing = document.getElementById('mobile-connect');
-    if (existing) return;
-
-    var savedUrl = window.getMobileServerUrl();
-    var html = '<div id="mobile-connect">' +
-      '<h2>🎵 Mineradio Mobile</h2>' +
-      '<p>请输入服务器地址以连接音源服务<br>（在你的电脑上运行 <code>node server.js</code> 并输入 IP:端口）</p>' +
-      '<input type="text" id="mobile-server-input" placeholder="例如: http://192.168.1.100:3000" value="' + (savedUrl || '') + '">' +
-      '<button id="mobile-connect-btn">连接</button>' +
-      '<button class="skip-btn" id="mobile-skip-btn">跳过，稍后设置</button>' +
-      '</div>';
-
-    document.body.insertAdjacentHTML('beforeend', html);
-
-    document.getElementById('mobile-connect-btn').addEventListener('click', function() {
-      var url = document.getElementById('mobile-server-input').value.trim();
-      if (url) window.MineradioMobile.reconnect(url);
-    });
-
-    document.getElementById('mobile-skip-btn').addEventListener('click', function() {
-      document.getElementById('mobile-connect').classList.add('hidden');
-    });
-
-    // Also connect on Enter key
-    document.getElementById('mobile-server-input').addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') {
-        var url = this.value.trim();
-        if (url) window.MineradioMobile.reconnect(url);
-      }
-    });
-  }
-
-  // Show connect screen only on mobile when no server is configured
-  if (isMobile && !window.getMobileServerUrl()) {
-    setTimeout(showConnectScreen, 500);
-  }
+  // Server connection setup UI removed — app now uses same-origin or pre-configured server URL
+  // To change server URL, use the settings panel or call window.MineradioMobile.reconnect(url)
 
   // -- Mobile navigation bar --
   function createMobileNav() {
