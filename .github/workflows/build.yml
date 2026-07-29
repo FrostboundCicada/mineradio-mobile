@@ -14,15 +14,17 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'  # 使用 Node 22 避免弃用警告
+          node-version: '22'
 
       - run: npm ci
       - run: npm run build
       - run: npm install @capacitor/ios
+
       - name: Add iOS platform (clean)
         run: |
           rm -rf ios
           npx cap add ios
+
       - run: npx cap sync ios
       - run: sudo xcode-select -switch /Applications/Xcode.app
 
@@ -42,7 +44,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ios-app
-          # 修正路径：模拟器构建的 .app 位于 Debug-iphonesimulator 下
           path: ios/App/build/Build/Products/Debug-iphonesimulator/App.app
 
   build-android:
@@ -58,17 +59,19 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm install @capacitor/android
+
       - name: Add Android platform (clean)
         run: |
           rm -rf android
           npx cap add android
+
       - run: npx cap sync android
 
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'   # 从 17 改为 21
 
       - name: Build Android APK
         run: |
