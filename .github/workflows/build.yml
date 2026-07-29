@@ -14,17 +14,17 @@ jobs:
           node-version: '20'
       - run: npm ci
       - run: npm run build
-      - run: npm install @capacitor/ios
-      - name: Add iOS platform (clean)
+      - name: Add iOS platform
         run: |
-          rm -rf ios
-          npx cap add ios
-      - run: npx cap sync ios
+          if [ ! -d "ios" ]; then
+            npx cap add ios
+          fi
+          npx cap sync ios
       - name: Import certificate
         env:
           CERT_BASE64: ${{ secrets.IOS_CERT_P12_BASE64 }}
           PROVISION_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
-          CERT_PASSWORD: ${{ secrets.IOS_CERT_PASSWORD }}
+          CERT_PASSWORD: "210917"
         run: |
           security create-keychain -p "" build.keychain
           security default-keychain -s build.keychain
@@ -60,23 +60,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
       - run: npm ci
       - run: npm run build
-      - run: npm install @capacitor/android
-      - name: Add Android platform (clean)
+      - name: Sync Android platform
         run: |
-          rm -rf android
-          npx cap add android
-      - run: npx cap sync android
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '21'          # 改为 Java 21
+          if [ ! -d "android" ]; then
+            npx cap add android
+          fi
+          npx cap sync android
       - name: Build APK
         run: |
           cd android
