@@ -31,9 +31,32 @@ jobs:
           security unlock-keychain -p "" build.keychain
           echo "$CERT_BASE64" | tr -d '\r' | base64 --decode > certificate.p12
           security import certificate.p12 -k build.keychain -P "$CERT_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
           echo "$PROVISION_BASE64" | tr -d '\r' | base64 --decode > profile.mobileprovision
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< $(security cms -D -i profile.mobileprovision))
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
+          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/${PROFILE_UUID}.mobileprovision
+      - name: Configure Xcode project signing
+        run: |
+          cd ios/App
+          /usr/libexec/PlistBuddy -c "Print :objects" App.xcodeproj/project.pbxproj > /dev/null 2>&1 || true
+          # Use Ruby with xcodeproj gem to set signing settings on App target only
+          ruby -e "
+            require 'xcodeproj'
+            project = Xcodeproj::Project.open('App.xcodeproj')
+            project.targets.each do |target|
+              if target.name == 'App'
+                target.build_configurations.each do |config|
+                  config.build_settings['CODE_SIGN_STYLE'] = 'Manual'
+                  config.build_settings['DEVELOPMENT_TEAM'] = 'A7D43ZJQR5'
+                  config.build_settings['CODE_SIGN_IDENTITY'] = 'Apple Development'
+                  config.build_settings['PROVISIONING_PROFILE_SPECIFIER'] = 'Mineradio'
+                end
+              end
+            end
+            project.save
+            puts 'Project signing settings configured.'
+          "
       - name: Build and sign
         run: |
           cd ios/App
@@ -41,10 +64,7 @@ jobs:
             -scheme App \
             -configuration Release \
             -sdk iphoneos \
-            -derivedDataPath build \
-            -allowProvisioningUpdates \
-            DEVELOPMENT_TEAM="A7D43ZJQR5" \
-            CODE_SIGN_IDENTITY="Apple Development"
+            -derivedDataPath build
       - name: Package IPA
         run: |
           mkdir -p Payload
