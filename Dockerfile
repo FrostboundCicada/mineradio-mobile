@@ -1,14 +1,21 @@
-FROM node:20-alpine
+FROM node:20-slim
+
 WORKDIR /app
 
-# Install deps
-COPY package.json package-lock.json ./
-RUN npm install --production
+# Copy package files and install dependencies
+COPY package*.json ./
+RUN npm ci --omit=dev
 
-# Copy all files
-COPY . .
+# Copy server source code
+COPY server/ ./server/
 
-# CloudBase Cloud Run needs port 80 or 3000
+# Set environment variables
+ENV HOST=0.0.0.0
+ENV PORT=3000
+ENV NODE_ENV=production
+
+# Expose the port
 EXPOSE 3000
 
+# Start the cloud server (handles CORS + proxies to internal server.js)
 CMD ["node", "server/cloud-server.js"]

@@ -1,0 +1,5 @@
+{
+  "serverUrl": "",
+  "version": 1,
+  "notice": "部署云端服务器后，将 serverUrl 设置为你的服务器地址（例如 https://mineradio-api.onrender.com）"
+}
