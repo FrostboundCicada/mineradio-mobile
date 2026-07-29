@@ -1,5 +1,5 @@
 {
-  "serverUrl": "",
-  "version": 1,
-  "notice": "部署云端服务器后，将 serverUrl 设置为你的服务器地址（例如 https://mineradio-api.onrender.com）"
+  "serverUrl": "https://a6aembkie4uq-production-0ruijjk2.us-central1.suga.run",
+  "version": 2,
+  "notice": "Mineradio API Server on Suga Cloud"
 }
