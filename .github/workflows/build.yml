@@ -4,7 +4,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  # ============= iOS 构建 =============
   build-ios:
     runs-on: macos-latest
     steps:
@@ -30,9 +29,9 @@ jobs:
           security create-keychain -p "" build.keychain
           security default-keychain -s build.keychain
           security unlock-keychain -p "" build.keychain
-          echo "$CERT_BASE64" | base64 --decode > certificate.p12
+          echo "$CERT_BASE64" | tr -d '\r' | base64 --decode > certificate.p12
           security import certificate.p12 -k build.keychain -P "$CERT_PASSWORD" -T /usr/bin/codesign
-          echo "$PROVISION_BASE64" | base64 --decode > profile.mobileprovision
+          echo "$PROVISION_BASE64" | tr -d '\r' | base64 --decode > profile.mobileprovision
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
       - name: Build and sign
@@ -57,7 +56,6 @@ jobs:
           name: ios-ipa
           path: app.ipa
 
-  # ============= Android 构建 =============
   build-android:
     runs-on: ubuntu-latest
     steps:
@@ -78,7 +76,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'          # 改为 Java 21
       - name: Build APK
         run: |
           cd android
