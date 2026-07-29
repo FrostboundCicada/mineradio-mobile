@@ -1,0 +1,12 @@
+node_modules/
+dist/
+www/
+.github/
+.uploads/
+*.log
+.DS_Store
+.cookie
+.qq-cookie
+.kugou-cookie
+.qishui-cookie
+data/
