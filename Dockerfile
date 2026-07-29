@@ -2,12 +2,15 @@ FROM node:20-slim
 
 WORKDIR /app
 
-# Copy package files and install dependencies
+# Copy package files and install ALL dependencies (including dev for build)
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN npm ci
 
-# Copy server source code
-COPY server/ ./server/
+# Copy source code
+COPY . .
+
+# Create placeholder dist directory (Suga platform expects it)
+RUN mkdir -p dist
 
 # Set environment variables
 ENV HOST=0.0.0.0
