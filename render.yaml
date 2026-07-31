@@ -1,15 +1,16 @@
 services:
   - type: web
-    name: mineradio-api
-    runtime: docker
+    name: mineradio
+    env: docker
+    region: singapore
     plan: free
-    dockerfilePath: ./Dockerfile
-    healthCheckPath: /api/login/status
+    branch: master
+    healthCheckPath: /api/health
     autoDeploy: true
     envVars:
       - key: NODE_ENV
         value: production
       - key: HOST
         value: 0.0.0.0
-      - key: PORT
-        value: 3000
+      - key: MINERADIO_BEAT_CACHE_DIR
+        value: /tmp/beatmaps
